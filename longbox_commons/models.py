@@ -5,8 +5,9 @@ candidates across platforms.
 """
 
 from datetime import date
+from typing import Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SeriesInfo(BaseModel):
@@ -47,7 +48,7 @@ class IssueCandidate(BaseModel):
     isbn: str | None = None
     variant_name: str | None = None
 
-    raw_payload: dict[str, str] | None = None
+    raw_payload: dict[str, Any] | None = Field(default=None)
 
     def display_issue_number(self) -> str:
         """Issue number with variant suffix for display."""
@@ -68,7 +69,7 @@ class SeriesCandidate(BaseModel):
     series_end_year: int | None = None
     volume_number: int | None = None
 
-    raw_payload: dict[str, str] | None = None
+    raw_payload: dict[str, Any] | None = Field(default=None)
 
 
 class ComicIdentity(BaseModel):

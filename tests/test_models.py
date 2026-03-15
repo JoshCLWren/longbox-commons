@@ -14,11 +14,13 @@ class TestSeriesInfo:
     """SeriesInfo model."""
 
     def test_minimal(self) -> None:
+        """Test SeriesInfo with minimal required fields."""
         s = SeriesInfo(title="X-Men")
         assert s.title == "X-Men"
         assert s.start_year is None
 
     def test_full(self) -> None:
+        """Test SeriesInfo with all optional fields populated."""
         s = SeriesInfo(
             title="X-Men",
             start_year=1963,
@@ -30,6 +32,7 @@ class TestSeriesInfo:
         assert s.volume_number == 1
 
     def test_frozen(self) -> None:
+        """Test that SeriesInfo is frozen and immutable."""
         s = SeriesInfo(title="X-Men")
         try:
             s.title = "New X-Men"
@@ -43,6 +46,7 @@ class TestIssueCandidate:
     """IssueCandidate model."""
 
     def test_display_issue_number_plain(self) -> None:
+        """Test display_issue_number with plain issue number."""
         ic = IssueCandidate(
             source="clz",
             source_series_id="xmen",
@@ -53,6 +57,7 @@ class TestIssueCandidate:
         assert ic.display_issue_number() == "1"
 
     def test_display_issue_number_with_variant(self) -> None:
+        """Test display_issue_number with variant suffix."""
         ic = IssueCandidate(
             source="clz",
             source_series_id="xmen",
@@ -64,6 +69,7 @@ class TestIssueCandidate:
         assert ic.display_issue_number() == "1.A"
 
     def test_optional_fields(self) -> None:
+        """Test IssueCandidate with optional fields populated."""
         ic = IssueCandidate(
             source="gcd",
             source_series_id="100",
@@ -83,6 +89,7 @@ class TestSeriesCandidate:
     """SeriesCandidate model."""
 
     def test_minimal(self) -> None:
+        """Test SeriesCandidate with minimal required fields."""
         sc = SeriesCandidate(
             source="clz",
             source_series_id="batman",
@@ -92,6 +99,7 @@ class TestSeriesCandidate:
         assert sc.publisher is None
 
     def test_with_publisher(self) -> None:
+        """Test SeriesCandidate with publisher field populated."""
         sc = SeriesCandidate(
             source="gcd",
             source_series_id="42",
@@ -107,6 +115,7 @@ class TestComicIdentity:
     """ComicIdentity model."""
 
     def test_creation(self) -> None:
+        """Test ComicIdentity creation with all fields."""
         ci = ComicIdentity(
             series_title="Doom Patrol",
             issue_number="19",
@@ -119,6 +128,7 @@ class TestComicIdentity:
         assert ci.explanation == "Exact match on series+issue+year"
 
     def test_frozen(self) -> None:
+        """Test that ComicIdentity is frozen and immutable."""
         ci = ComicIdentity(series_title="X", issue_number="1")
         try:
             ci.series_title = "Y"
