@@ -1,227 +1,182 @@
-# Python Starter Template
+# longbox-commons
 
-[![CI Status](https://github.com/JoshCLWren/python-starter-template/workflows/CI/badge.svg)](https://github.com/JoshCLWren/python-starter-template/actions)
+[![CI Status](https://github.com/JoshCLWren/longbox-commons/workflows/CI/badge.svg)](https://github.com/JoshCLWren/longbox-commons/actions)
 
-A modern Python 3.13 project template with best practices, tooling, and CI/CD preconfigured.
+Comic domain foundation library providing parsing, models, CLZ I/O, and price utilities for Python 3.13+.
+
+## Overview
+
+`longbox-commons` is a foundational package for comic book collection management systems. It provides core domain models, parsing utilities, and data import/export functionality used across the longbox ecosystem.
 
 ## Features
 
-- **Python 3.13** with type hints throughout
-- **uv** for fast dependency management
-- **pytest** with 96% minimum test coverage
-- **ruff** for linting and formatting
-- **pyright** for static type checking
-- **Pre-commit hooks** to enforce code quality
-- **GitHub Actions CI** for automated testing
-- **Project initialization** via `make init`
+- **Issue Number Parsing** — Parse and normalize comic issue numbers with variants, decimals, fractions, and format codes
+- **Domain Models** — Pydantic models for series, issues, and identity candidates
+- **CLZ CSV I/O** — Read and write Comic Collector CSV exports with validation
+- **Price Parsing** — Extract numeric prices from marketplace strings with currency symbols
+- **Zero External Dependencies** — Only requires Pydantic
+
+## Installation
+
+```bash
+pip install longbox-commons
+```
 
 ## Quick Start
 
-```bash
-# Clone the repository
-git clone https://github.com/JoshCLWren/python-starter-template.git
-cd python-starter-template
+### Parsing Issue Numbers
 
-# Initialize with your project name
-make init NAME=my-awesome-project
+```python
+from longbox_commons import parse_issue_candidate, ParseResult
+
+# Parse standard issue numbers
+result = parse_issue_candidate("#1")
+assert result.success
+assert result.canonical_issue_number == "1"
+
+# Parse variant issues
+result = parse_issue_candidate("12B")
+assert result.canonical_issue_number == "12"
+assert result.variant_suffix == "B"
+
+# Parse decimal and fraction issues
+result = parse_issue_candidate("0.5")
+assert result.canonical_issue_number == "0.5"
+
+result = parse_issue_candidate("½")
+assert result.canonical_issue_number == "1/2"
+```
+
+### Using Domain Models
+
+```python
+from longbox_commons import IssueCandidate, SeriesCandidate
+from datetime import date
+
+issue = IssueCandidate(
+    source="clz",
+    source_series_id="batman-1940",
+    source_issue_id="12345",
+    series_title="Batman",
+    series_start_year=1940,
+    publisher="DC Comics",
+    issue_number="1",
+    variant_suffix="A",
+    cover_date=date(1940, 4, 1),
+    price=0.10,
+)
+
+series = SeriesCandidate(
+    source="clz",
+    source_series_id="batman-1940",
+    series_title="Batman",
+    series_start_year=1940,
+    publisher="DC Comics",
+)
+```
+
+### CLZ CSV Import
+
+```python
+from longbox_commons.clz import read_csv_file, row_to_issue
+
+# Read CLZ export
+rows = read_csv_file("my_collection.csv")
+
+# Convert rows to domain models
+issues = []
+for row in rows:
+    try:
+        issue = row_to_issue(row)
+        issues.append(issue)
+    except Exception as e:
+        print(f"Skipping row: {e}")
+```
+
+### Price Parsing
+
+```python
+from longbox_commons import parse_price
+
+# Parse marketplace price strings
+price = parse_price("$12.99")
+assert price == 12.99
+
+price = parse_price("1,299.00 USD")
+assert price == 1299.0
+```
+
+## Modules
+
+### `longbox_commons.parsing`
+
+Issue number parsing and normalization. Handles:
+- Standard issue numbers: `1`, `#1`, `-1`
+- Variants: `12B`, `1A`, `100ABC`
+- Decimals: `0.5`, `0.1`
+- Fractions: `½`, `¼`, `⅓` (normalized to `1/2`, `1/4`, `1/3`)
+- Format codes: `TP`, `HC`, `GN`, `SC`, `TPB`, `OGN`, `OM`
+- CLZ format patterns: `HC-2`, `1HC-E`, `TPB`
+
+### `longbox_commons.models`
+
+Pydantic domain models:
+- `SeriesInfo` — Core series metadata
+- `IssueCandidate` — Intermediate issue representation for ingestion
+- `SeriesCandidate` — Intermediate series representation for ingestion
+- `ComicIdentity` — Resolved identity with confidence scoring
+
+### `longbox_commons.clz`
+
+CLZ Comic Collector CSV import/export:
+- `read_csv_file()` — Load CSV from file path
+- `read_csv_string()` — Load CSV from string
+- `write_csv_file()` — Write rows to CSV file
+- `row_to_issue()` — Convert CSV row to IssueCandidate
+- `row_to_series()` — Convert CSV row to SeriesCandidate
+
+### `longbox_commons.prices`
+
+Price parsing utilities:
+- `parse_price()` — Extract numeric value from price strings
+
+## Development
+
+```bash
+# Clone repository
+git clone https://github.com/JoshCLWren/longbox-commons.git
+cd longbox-commons
 
 # Install dependencies
 uv sync --all-extras
 
-# Activate the virtual environment (do this once per session)
+# Activate virtual environment
 source .venv/bin/activate
 
 # Run tests
 pytest
 
-# Run your application
-python main.py --name World --value 42
-```
-
-## Development Workflow
-
-### First Time Setup
-
-1. **Rename the project**:
-   ```bash
-   make init NAME=your-project-name
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   uv sync --all-extras
-   ```
-
-3. **Activate the virtual environment**:
-   ```bash
-   source .venv/bin/activate
-   ```
-
-### Daily Development
-
-Once the virtual environment is activated:
-
-```bash
-# Run the application
-python main.py --name World --value 42
-
-# Run tests
-pytest
-
-# Run tests with coverage report
-pytest --cov-report=term-missing
-
 # Run linting
 make lint
-
-# Format code with ruff
-ruff format .
 ```
 
 ### Make Commands
 
-- `make init NAME=your-project` - Initialize with new project name
-- `make lint` - Run all linting checks (ruff + pyright)
-- `make pytest` - Run the test suite
-- `make venv` - Create virtual environment
-- `make sync` - Install/update dependencies
+- `make lint` — Run ruff and pyright
+- `make pytest` — Run test suite with coverage
+- `make sync` — Install/update dependencies
 
-## Project Structure
+## Requirements
 
-```
-.
-├── example_module/          # Main package (rename via make init)
-│   ├── __init__.py
-│   └── core.py             # Core business logic
-├── tests/                   # Test suite
-│   ├── conftest.py         # pytest fixtures
-│   └── test_example.py     # Example tests
-├── .github/
-│   ├── actions/setup/       # CI setup action
-│   └── workflows/ci.yml    # CI pipeline
-├── scripts/
-│   └── lint.sh            # Linting script
-├── main.py                # Application entrypoint
-├── pyproject.toml        # Project configuration
-├── uv.lock               # Dependency lockfile
-└── .gitignore           # Git ignore rules
-```
+- Python 3.13+
+- Pydantic 2.0+
 
 ## Testing
 
-The template uses pytest with coverage reporting:
+Minimum 96% test coverage enforced. Run tests with:
 
 ```bash
-# Run all tests
-pytest
-
-# Run with verbose output
-pytest -v
-
-# Run specific test file
-pytest tests/test_example.py
-
-# Run with coverage
-pytest --cov=example_module --cov-report=html
-```
-
-**Coverage requirement**: Minimum 96% (configured in pyproject.toml)
-
-## Code Quality
-
-### Linting
-
-The project uses ruff for fast Python linting:
-
-```bash
-# Run linter
-ruff check .
-
-# Fix auto-fixable issues
-ruff check --fix .
-
-# Format code
-ruff format .
-```
-
-### Type Checking
-
-Pyright provides static type checking:
-
-```bash
-# Run type checker
-pyright .
-```
-
-### Pre-commit Hook
-
-A pre-commit hook is installed automatically that runs:
-- Python compilation check
-- Ruff linting
-- Any type usage check (disallows `Any` type)
-- Pyright type checking
-
-The hook will block commits with issues. To test manually:
-
-```bash
-make githook
-```
-
-## Configuration
-
-### Python Version
-
-Default is Python 3.13. To change:
-
-1. Update `requires-python` in `pyproject.toml`
-2. Update `target-version` in `pyproject.toml`
-3. Update `.python-version` file
-4. Recreate venv: `rm -rf .venv && uv venv`
-
-### Coverage Threshold
-
-Set in `pyproject.toml`:
-
-```toml
-[tool.pytest.ini_options]
-addopts = ["--cov-fail-under=96"]
-```
-
-### Lint Rules
-
-Configure in `pyproject.toml` under `[tool.ruff]`:
-
-```toml
-[tool.ruff]
-line-length = 100
-target-version = "py313"
-```
-
-## CI/CD
-
-GitHub Actions runs on every push to main and on pull requests:
-
-- **Lint job**: Runs ruff and pyright
-- **Tests job**: Runs pytest with coverage
-
-View pipeline status in the Actions tab of the repository.
-
-## Dependency Management
-
-The project uses uv for fast dependency management:
-
-```bash
-# Add a new dependency
-uv add package-name
-
-# Add dev dependency
-uv add --dev package-name
-
-# Remove dependency
-uv remove package-name
-
-# Update dependencies
-uv sync
+pytest --cov=longbox_commons --cov-report=term-missing
 ```
 
 ## Contributing
@@ -236,15 +191,15 @@ uv sync
 
 ## License
 
-MIT License - see LICENSE file for details
+MIT License — see LICENSE file for details
+
+## Related Packages
+
+- [scrapekit](https://github.com/JoshCLWren/scrapekit) — HTTP client and caching
+- [stealthkit](https://github.com/JoshCLWren/stealthkit) — Playwright stealth automation
+- [dbkit](https://github.com/JoshCLWren/dbkit) — Async database factory
+- [comic-identity-engine](https://github.com/JoshCLWren/comic-identity-engine) — Entity resolution system
 
 ## Credits
 
-Template created by Josh Wren
-
-## Related
-
-- [uv Documentation](https://docs.astral.sh/uv/)
-- [pytest Documentation](https://docs.pytest.org/)
-- [ruff Documentation](https://docs.astral.sh/ruff/)
-- [pyright Documentation](https://microsoft.github.io/pyright/)
+Created by Josh Wren
