@@ -1,6 +1,12 @@
 """Longbox Commons — Comic domain foundation library."""
 
-from longbox_commons.models import IssueCandidate, SeriesCandidate
+from longbox_commons.models import (
+    IssueCandidate,
+    IssueInfo,
+    PublisherInfo,
+    SeriesBrowseInfo,
+    SeriesCandidate,
+)
 from longbox_commons.parsing import (
     FORMAT_ISSUE_CODES,
     ParseResult,
@@ -21,4 +27,7 @@ __all__ = [
     "parse_price",
     "IssueCandidate",
     "SeriesCandidate",
+    "PublisherInfo",
+    "SeriesBrowseInfo",
+    "IssueInfo",
 ]
